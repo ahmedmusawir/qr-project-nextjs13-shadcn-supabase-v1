@@ -7,6 +7,16 @@ export async function middleware(request: NextRequest) {
   const supabase = createClient();
 
   const { data, error } = await supabase.auth.getUser();
+  const response = NextResponse.next();
+
+  // Set Cache-Control headers
+  response.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+  );
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+
   if (error || !data.user) {
     return NextResponse.redirect(new URL("/auth", request.url));
   }
