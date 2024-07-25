@@ -1,31 +1,35 @@
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+"use client";
+
+import { ReactNode, useEffect } from "react";
+import { useAuthStore } from "@/store/useAuthStore";
+import Spinner from "@/components/common/Spinner";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/global/Navbar";
-import Sidebar from "@/components/layout/Sidebar";
 
-export default async function MemberLayout({
-  children,
-}: {
+interface LayoutProps {
   children: ReactNode;
-}) {
-  const supabase = createClient();
-  const { data, error } = await supabase.auth.getUser();
+}
 
-  // // Protecting from non-logged in public user
-  // if (error || !data.user) {
-  //   redirect("/auth");
-  //   return null;
-  // }
+const MemberLayout = ({ children }: LayoutProps) => {
+  const router = useRouter();
+  const roles = useAuthStore((state) => state.roles);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // // Protecting from logged in other types of users
-  // const roles = data.user.user_metadata;
-  // console.log("USER METADATA IN MEMBER LAYOUT", roles);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/auth");
+    } else if (roles.is_qr_member !== 1) {
+      router.push("/auth");
+    }
+  }, [isAuthenticated, roles, router]);
 
-  // if (roles.is_qr_member !== 1) {
-  //   redirect("/auth");
-  //   return null;
-  // }
+  if (!isAuthenticated || roles.is_qr_member !== 1) {
+    return (
+      <div>
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -38,4 +42,6 @@ export default async function MemberLayout({
       </div>
     </div>
   );
-}
+};
+
+export default MemberLayout;
